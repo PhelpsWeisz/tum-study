@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F6F0E4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1B1411" media="(prefers-color-scheme: dark)">
-<title>Pinturas e decisões · Paintings and decisions</title>
+<title data-edit="tab_title">Pinturas e decisões · Paintings and decisions</title>
 <style>
   /* No external files, cookies, storage, analytics or forms: the page only reads its
      own address and builds the study link. The one font is served from this repo
@@ -164,10 +164,10 @@
       <circle class="ring ring-in" cx="42" cy="42" r="35"/>
       <text x="42" y="51" text-anchor="middle" font-size="27">P<tspan class="dot" dx="1" dy="-8" font-size="11">◆</tspan><tspan dx="1" dy="8">D</tspan></text>
     </svg>
-    <h1>Pinturas e decisões · Paintings and decisions</h1>
+    <h1 data-edit="desk_title">Pinturas e decisões · Paintings and decisions</h1>
     <div class="spinner" aria-hidden="true"></div>
-    <p class="opening">A abrir o estudo… <span class="en">· Opening the study…</span></p>
-    <p class="fallback"><a id="desk-link" href="#">Se nada acontecer, clique aqui. · If nothing happens, click here.</a></p>
+    <p class="opening"><span data-edit="desk_opening_pt">A abrir o estudo…</span> <span class="en" data-edit="desk_opening_en">· Opening the study…</span></p>
+    <p class="fallback"><a id="desk-link" href="#" data-edit="desk_fallback">Se nada acontecer, clique aqui. · If nothing happens, click here.</a></p>
   </section>
 
   <!-- Shown on a phone or tablet. -->
@@ -178,39 +178,39 @@
       <circle class="ring ring-in" cx="42" cy="42" r="35"/>
       <text x="42" y="51" text-anchor="middle" font-size="27">P<tspan class="dot" dx="1" dy="-8" font-size="11">◆</tspan><tspan dx="1" dy="8">D</tspan></text>
     </svg>
-    <h1>Pinturas e decisões</h1>
-    <p class="sub">Paintings and decisions · TUM</p>
-    <p class="tagline">Procuram-se participantes <span class="en">Participants wanted</span></p>
+    <h1 data-edit="title">Pinturas e decisões</h1>
+    <p class="sub" data-edit="subtitle">Paintings and decisions · TUM</p>
+    <p class="tagline"><span data-edit="tagline_pt">Procuram-se participantes</span> <span class="en" data-edit="tagline_en">Participants wanted</span></p>
 
     <ul class="chips" aria-label="Detalhes · Details">
-      <li><b>cerca de 40 minutos</b> · about 40 minutes</li>
-      <li><b>num computador</b> · on a computer</li>
-      <li><b>em inglês</b> · in English</li>
-      <li><b>anónimo</b> · anonymous</li>
-      <li><b>não remunerado</b> · unpaid</li>
+      <li><b data-edit="chip1_pt">cerca de 40 minutos</b> · <span data-edit="chip1_en">about 40 minutes</span></li>
+      <li><b data-edit="chip2_pt">num computador</b> · <span data-edit="chip2_en">on a computer</span></li>
+      <li><b data-edit="chip3_pt">em inglês</b> · <span data-edit="chip3_en">in English</span></li>
+      <li><b data-edit="chip4_pt">anónimo</b> · <span data-edit="chip4_en">anonymous</span></li>
+      <li><b data-edit="chip5_pt">não remunerado</b> · <span data-edit="chip5_en">unpaid</span></li>
     </ul>
 
     <div class="rule" aria-hidden="true"><i></i></div>
 
     <div class="card">
-      <p><strong>Este estudo só funciona num computador.</strong> Envie a ligação para si e abra-a mais tarde num computador.</p>
-      <p class="en">This study only works on a computer: send yourself the link and open it later.</p>
+      <p><strong data-edit="card_pt_bold">Este estudo só funciona num computador.</strong> <span data-edit="card_pt">Envie a ligação para si e abra-a mais tarde num computador.</span></p>
+      <p class="en" data-edit="card_en">This study only works on a computer: send yourself the link and open it later.</p>
     </div>
 
     <div class="btns">
-      <button type="button" class="btn primary" id="b-share" hidden><span>Partilhar…</span><small>Share…</small></button>
-      <a class="btn" id="b-mail" href="#"><span>Enviar por e-mail</span><small>Send by e-mail</small></a>
-      <a class="btn" id="b-wa" href="#" rel="noopener noreferrer"><span>Enviar por WhatsApp</span><small>Send via WhatsApp (“Message yourself”)</small></a>
-      <button type="button" class="btn" id="b-copy"><span>Copiar ligação</span><small>Copy link</small></button>
+      <button type="button" class="btn primary" id="b-share" hidden><span data-edit="share_pt">Partilhar…</span><small data-edit="share_en">Share…</small></button>
+      <a class="btn" id="b-mail" href="#"><span data-edit="mail_pt">Enviar por e-mail</span><small data-edit="mail_en">Send by e-mail</small></a>
+      <a class="btn" id="b-wa" href="#" rel="noopener noreferrer"><span data-edit="wa_pt">Enviar por WhatsApp</span><small data-edit="wa_en">Send via WhatsApp (“Message yourself”)</small></a>
+      <button type="button" class="btn" id="b-copy"><span data-edit="copy_pt">Copiar ligação</span><small data-edit="copy_en">Copy link</small></button>
     </div>
     <div class="status" id="status" aria-live="polite"></div>
     <div class="link" id="linktext"></div>
 
-    <p class="anyway"><a id="b-anyway" href="#">Continuar neste dispositivo mesmo assim · Continue on this device anyway</a></p>
+    <p class="anyway"><a id="b-anyway" href="#" data-edit="anyway">Continuar neste dispositivo mesmo assim · Continue on this device anyway</a></p>
   </section>
 
   <noscript>
-    <p>Abra num computador · Open on a computer:<br>
+    <p><span data-edit="noscript">Abra num computador · Open on a computer:</span><br>
     <a href="https://run.pavlovia.org/PhelpsO/Felipe_Experiment_Release">https://run.pavlovia.org/PhelpsO/Felipe_Experiment_Release</a></p>
   </noscript>
 </main>

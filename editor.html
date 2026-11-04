@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src 'self'; connect-src 'self' https://api.github.com; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>Text editor · Pinturas e decisões</title>
+<style>
+  /* Editor for the texts of index.html. It reads the current file from GitHub, shows the
+     fields, previews the result live, and can publish straight back to the repo with a
+     GitHub token you paste in. The token never leaves your browser except to api.github.com. */
+  @font-face{font-family:"Lora"; font-style:normal; font-weight:400 700; font-display:swap; src:url("fonts/Lora-latin.woff2") format("woff2")}
+  :root{
+    color-scheme:light dark;
+    --bg:#F6F0E4; --card:#FFFCF6; --ink:#2A1F1B; --ink-2:#6B5A50; --line:#E4D7C3; --soft:#F3E8D6;
+    --burg:#6E1F1A; --burg-text:#6E1F1A; --gold:#B08A3E; --gold-text:#7A5C1C; --ok:#2F6B3A; --err:#8E1F1F;
+    --field:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1B1411; --card:#261D19; --ink:#F3EADB; --ink-2:#C2B2A0; --line:#3E302A; --soft:#2F2420;
+      --burg:#8A2A23; --burg-text:#F1AEA5; --gold:#C9A45C; --gold-text:#DABB76; --ok:#8FD19A; --err:#F1AEA5;
+      --field:#1F1714;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust:100%}
+  header{padding:18px 16px 10px; max-width:1240px; margin:0 auto}
+  header h1{font-family:"Lora", Georgia, serif; font-weight:600; font-size:24px; margin:0 0 2px; color:var(--burg-text)}
+  header p{margin:0; color:var(--ink-2)}
+  .layout{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; max-width:1240px; margin:0 auto; padding:0 16px 40px}
+  @media (max-width:900px){ .layout{grid-template-columns:minmax(0,1fr)} .preview-col{order:-1} .preview-col .panel{position:static} iframe{height:50vh; min-height:360px} }
+  .panel{background:var(--card); border:1px solid var(--gold); border-radius:6px; box-shadow:inset 0 0 0 3px var(--card), inset 0 0 0 4px var(--gold); padding:18px 16px}
+  .toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 12px}
+  .btn{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 18px; border-radius:999px; border:1.5px solid var(--burg-text); background:var(--card); color:var(--burg-text); font:inherit; font-weight:600; cursor:pointer; text-decoration:none}
+  .btn.primary{background:var(--burg); border-color:var(--burg); color:#fff}
+  .btn:disabled{opacity:.5; cursor:default}
+  .btn:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+  .btn.small{min-height:36px; padding:4px 12px; font-size:14px; font-weight:500}
+  .btn.on{background:var(--soft); box-shadow:inset 0 0 0 2px var(--gold)}
+  fieldset{border:1px solid var(--line); border-radius:12px; padding:10px 14px 14px; margin:0 0 14px; background:var(--soft)}
+  legend{font-family:"Lora", Georgia, serif; font-weight:600; font-size:17px; color:var(--burg-text); padding:0 6px}
+  .f{display:block; margin:8px 0 0}
+  .f .lab{display:block; font-size:13px; color:var(--ink-2); margin:0 0 3px}
+  .f .lab b{color:var(--ink); font-weight:600}
+  .f .lab .lang{display:inline-block; font-size:11px; font-weight:600; letter-spacing:.04em; padding:1px 6px; border-radius:999px; border:1px solid var(--gold); color:var(--gold-text); margin-right:6px; vertical-align:middle}
+  input[type=text], input[type=password], textarea{width:100%; font:inherit; font-size:15px; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:9px 11px; min-height:44px}
+  textarea{resize:vertical}
+  input:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold)}
+  .pair{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media (max-width:520px){ .pair{grid-template-columns:1fr} }
+  .hint{font-size:13px; color:var(--ink-2); margin:6px 0 0}
+  .status{min-height:1.5em; margin:8px 0 0; font-size:14px}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+  .preview-col .panel{position:sticky; top:12px}
+  .preview-wrap{background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; justify-content:center; overflow:auto}
+  iframe{border:0; background:var(--bg); width:100%; height:72vh; min-height:520px; border-radius:6px; transition:width .2s}
+  iframe.phone{width:390px; max-width:100%}
+  details{margin:0 0 14px}
+  summary{cursor:pointer; font-weight:600; color:var(--burg-text)}
+  code{font:13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:var(--soft); padding:1px 5px; border-radius:4px}
+  a{color:var(--burg-text)}
+  ol{padding-left:20px; margin:6px 0}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .row input[type=password]{flex:1; min-width:200px}
+  label.chk{display:flex; gap:6px; align-items:center; font-size:14px; color:var(--ink-2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Text editor · Pinturas e decisões</h1>
+  <p>Change the words on the landing page, check the preview, and publish. The design and the behaviour of the page stay the same.</p>
+</header>
+
+<div class="layout">
+  <div class="form-col">
+    <div class="panel">
+      <div class="toolbar">
+        <button type="button" class="btn primary" id="publish" disabled>Publish to GitHub</button>
+        <button type="button" class="btn" id="download" disabled>Download index.html</button>
+        <button type="button" class="btn" id="reload" title="Discard changes and load the current file again">Reload from GitHub</button>
+      </div>
+      <div class="status" id="status" aria-live="polite">Loading the current page from GitHub…</div>
+
+      <details id="tokbox">
+        <summary>GitHub token (needed only to publish)</summary>
+        <p class="hint">Publishing commits <code>index.html</code> straight to <code>main</code>; GitHub Pages republishes in one to two minutes. You need a token once:</p>
+        <ol class="hint">
+          <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">github.com/settings/personal-access-tokens/new</a> (signed in as PhelpsWeisz).</li>
+          <li>Name it e.g. “tum-study editor”, choose an expiry, and under <b>Repository access</b> pick <b>Only select repositories → tum-study</b>.</li>
+          <li>Under <b>Permissions → Repository permissions</b> set <b>Contents: Read and write</b>. Nothing else. Generate and copy it.</li>
+        </ol>
+        <div class="row">
+          <input type="password" id="token" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+          <label class="chk"><input type="checkbox" id="remember"> keep for this browser tab</label>
+        </div>
+        <p class="hint">The token is used only for requests to api.github.com from this page. Without a token you can still edit, preview and download the file, then upload it on GitHub.</p>
+      </details>
+
+      <form id="form" autocomplete="off"></form>
+    </div>
+  </div>
+
+  <div class="preview-col">
+    <div class="panel">
+      <div class="toolbar">
+        <strong style="margin-right:auto">Preview</strong>
+        <button type="button" class="btn small on" data-view="phone">Phone</button>
+        <button type="button" class="btn small" data-view="desk">Computer</button>
+        <button type="button" class="btn small" id="dark">Dark</button>
+      </div>
+      <div class="preview-wrap"><iframe id="preview" class="phone" title="Preview" sandbox="allow-scripts allow-same-origin"></iframe></div>
+      <p class="hint">Links in the preview do nothing. The Share button is shown here, but on real phones it appears only where the browser offers native sharing.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var OWNER = "PhelpsWeisz", REPO = "tum-study", BRANCH = "main", FILE = "index.html";
+  var API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + FILE;
+
+  /* Every field is either an HTML element marked data-edit="key" in index.html (plain text
+     only inside it) or one string literal in the page's script (kind "js"). */
+  var GROUPS = [
+    { title: "Title", fields: [
+      ["title", "Title", "pt"], ["subtitle", "Line under the title", "en"],
+      ["tagline_pt", "Subtitle", "pt"], ["tagline_en", "Subtitle", "en"] ] },
+    { title: "Chips", pairs: [["chip1_pt","chip1_en"],["chip2_pt","chip2_en"],["chip3_pt","chip3_en"],["chip4_pt","chip4_en"],["chip5_pt","chip5_en"]], label: "Chip " },
+    { title: "Explanation card", fields: [
+      ["card_pt_bold", "First sentence (bold)", "pt"], ["card_pt", "Rest of the text", "pt"], ["card_en", "English text", "en"] ] },
+    { title: "Buttons", pairs: [["share_pt","share_en"],["mail_pt","mail_en"],["wa_pt","wa_en"],["copy_pt","copy_en"]], names: ["Share", "E-mail", "WhatsApp", "Copy link"] },
+    { title: "Small print", fields: [ ["anyway", "“Continue on this device anyway” link", "pt+en"] ] },
+    { title: "Messages sent with the link", fields: [
+      ["js_subject", "E-mail subject", "pt+en", "js"], ["js_body", "First line of the e-mail and WhatsApp message (the link follows on the next line)", "pt+en", "js"],
+      ["js_share_title", "Title shown in the Share sheet", "pt+en", "js"],
+      ["js_copied", "Message after copying", "pt+en", "js"], ["js_selected", "Message when copying is not allowed", "pt+en", "js"] ] },
+    { title: "Screen a computer sees before it forwards", fields: [
+      ["desk_title", "Title", "pt+en"], ["desk_opening_pt", "Opening…", "pt"], ["desk_opening_en", "Opening…", "en"], ["desk_fallback", "Fallback link", "pt+en"] ] },
+    { title: "Other", fields: [ ["tab_title", "Browser tab title", "pt+en"], ["noscript", "Text shown if JavaScript is off", "pt+en"] ] }
+  ];
+  var JS = {
+    js_subject:     [/(var subject = ")(.*?)(";)/, 'js'],
+    js_body:        [/(var body = ")(.*?)(\\n" \+ link;)/, 'js'],
+    js_share_title: [/(navigator\.share\(\{ title: ")(.*?)(",)/, 'js'],
+    js_copied:      [/(\.then\(function\(\)\{ say\(")(.*?)("\); \}, fallback\);)/, 'js'],
+    js_selected:    [/(function fallback\(\)\{ selectLink\(\); say\(")(.*?)("\); \})/, 'js']
+  };
+
+  var source = "", sha = "", fields = {}, view = "phone", dark = false;
+  var form = document.getElementById("form"), status = document.getElementById("status");
+  var tokenInput = document.getElementById("token"), remember = document.getElementById("remember");
+
+  function say(t, cls){ status.textContent = t; status.className = "status " + (cls || ""); }
+  function escHtml(t){ return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function unescHtml(t){ return t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&"); }
+  function escJs(t){ return t.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " "); }
+  function unescJs(t){ return t.replace(/\\"/g, '"').replace(/\\\\/g, "\\"); }
+  function htmlRe(key){ return new RegExp('(<(\\w+)\\b[^>]*\\bdata-edit="' + key + '"[^>]*>)([^<]*)(<\\/\\2>)'); }
+
+  function readField(key, src){
+    if (JS[key]) { var m = src.match(JS[key][0]); return m ? unescJs(m[2]) : null; }
+    var h = src.match(htmlRe(key)); return h ? unescHtml(h[3]) : null;
+  }
+  function writeField(key, value, src){
+    if (JS[key]) return src.replace(JS[key][0], function(_, a, b, c){ return a + escJs(value) + c; });
+    return src.replace(htmlRe(key), function(_, a, tag, b, c){ return a + escHtml(value) + c; });
+  }
+  function apply(src){
+    var out = src;
+    Object.keys(fields).forEach(function(k){ out = writeField(k, fields[k], out); });
+    return out;
+  }
+
+  function addField(parent, key, label, lang, kind){
+    var val = readField(key, source);
+    if (val === null) return; // not in this version of the page
+    fields[key] = val;
+    var lab = document.createElement("label"); lab.className = "f";
+    var langs = lang.split("+").map(function(l){ return '<span class="lang">' + l.toUpperCase() + '</span>'; }).join("");
+    lab.innerHTML = '<span class="lab">' + langs + '<b></b></span>';
+    lab.querySelector("b").textContent = label;
+    var inp = document.createElement(val.length > 60 ? "textarea" : "input");
+    if (inp.tagName === "INPUT") inp.type = "text"; else inp.rows = 2;
+    inp.value = val; inp.dataset.key = key;
+    inp.addEventListener("input", function(){ fields[key] = inp.value; schedule(); });
+    lab.appendChild(inp); parent.appendChild(lab);
+  }
+  function build(){
+    form.innerHTML = ""; fields = {};
+    GROUPS.forEach(function(g){
+      var fs = document.createElement("fieldset"); var lg = document.createElement("legend"); lg.textContent = g.title; fs.appendChild(lg);
+      if (g.fields) g.fields.forEach(function(f){ addField(fs, f[0], f[1], f[2], f[3]); });
+      if (g.pairs) g.pairs.forEach(function(p, i){
+        var row = document.createElement("div"); row.className = "pair";
+        var name = g.names ? g.names[i] : g.label + (i + 1);
+        addField(row, p[0], name, "pt"); addField(row, p[1], name, "en"); fs.appendChild(row);
+      });
+      form.appendChild(fs);
+    });
+    render();
+  }
+
+  /* Preview: the page itself, with the forward disabled, links neutralised, a phone or
+     computer identity, and (optionally) the dark colours forced on. */
+  var timer = null;
+  function schedule(){ clearTimeout(timer); timer = setTimeout(render, 150); }
+  function render(){
+    var html = apply(source);
+    html = html.replace("window.location.replace(link);", "/* preview: no forward */");
+    if (dark) html = html.replace("@media (prefers-color-scheme: dark){", "@media all{");
+    var inject = '<script>(function(){' +
+      'try{Object.defineProperty(Navigator.prototype,"userAgent",{get:function(){return "' + (view === "phone" ? "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Preview" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Preview") + '"}});}catch(e){}' +
+      'try{Object.defineProperty(Navigator.prototype,"userAgentData",{get:function(){return undefined}});}catch(e){}' +
+      (view === "phone" ? 'navigator.share=function(){return Promise.resolve()};' : '') +
+      'document.addEventListener("click",function(e){if(e.target.closest("a"))e.preventDefault();},true);' +
+      '})();<\/script>';
+    html = html.replace("<head>", "<head>" + inject);
+    var fr = document.getElementById("preview"); fr.srcdoc = html;
+    fr.className = view === "phone" ? "phone" : "";
+    document.getElementById("download").disabled = false;
+    document.getElementById("publish").disabled = !source;
+  }
+
+  /* Base64 of UTF-8 text, both ways (the GitHub API speaks base64). */
+  function b64enc(s){ var b = new TextEncoder().encode(s), bin = ""; for (var i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]); return btoa(bin); }
+  function b64dec(s){ var bin = atob(s.replace(/\s/g, "")), b = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return new TextDecoder().decode(b); }
+
+  function token(){ return tokenInput.value.trim(); }
+  function headers(){ var h = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }; if (token()) h["Authorization"] = "Bearer " + token(); return h; }
+
+  function load(){
+    say("Loading the current page from GitHub…");
+    return fetch(API + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: headers(), cache: "no-store" })
+      .then(function(r){ if (!r.ok) throw new Error("GitHub answered " + r.status); return r.json(); })
+      .then(function(j){ source = b64dec(j.content); sha = j.sha; build(); say("Loaded the current page (" + source.length + " characters). Edit the texts; the preview updates as you type.", "ok"); })
+      .catch(function(e){
+        // Fallback: the published copy on this site (may lag a minute or two behind GitHub).
+        return fetch("index.html?t=" + Date.now(), { cache: "no-store" }).then(function(r){ return r.text(); }).then(function(t){
+          source = t; sha = ""; build(); say("GitHub API not reachable (" + e.message + "); loaded the published copy instead. Publishing will fetch the latest version first.", "err");
+        });
+      });
+  }
+
+  function download(){
+    var blob = new Blob([apply(source)], { type: "text/html;charset=utf-8" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = FILE; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    say("Downloaded index.html. To publish by hand: on GitHub open the repo, “Add file → Upload files”, drop it in, commit to main.", "ok");
+  }
+
+  function publish(){
+    if (!token()) { document.getElementById("tokbox").open = true; tokenInput.focus(); say("Paste a GitHub token first (see the box above), or download the file instead.", "err"); return; }
+    var btn = document.getElementById("publish"); btn.disabled = true; say("Publishing… fetching the latest version first.");
+    // Always apply the texts to the newest copy on GitHub, so nothing else in the file is lost.
+    fetch(API + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: headers(), cache: "no-store" })
+      .then(function(r){ if (!r.ok) throw new Error("could not read the current file (GitHub answered " + r.status + ")"); return r.json(); })
+      .then(function(j){
+        var latest = b64dec(j.content), out = apply(latest);
+        if (out === latest) { throw new Error("nothing to publish: the texts are the same as on GitHub"); }
+        return fetch(API, { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, headers()),
+          body: JSON.stringify({ message: "Update page texts via editor", content: b64enc(out), sha: j.sha, branch: BRANCH }) })
+          .then(function(r){ return r.json().then(function(b){ if (!r.ok) throw new Error((b && b.message) || ("GitHub answered " + r.status)); return b; }); })
+          .then(function(b){ source = out; sha = b.content && b.content.sha || sha; say("Published (commit " + (b.commit && b.commit.sha || "").slice(0, 7) + "). The live page updates in one to two minutes.", "ok"); });
+      })
+      .catch(function(e){ say("Not published: " + e.message, "err"); })
+      .then(function(){ btn.disabled = false; });
+  }
+
+  document.getElementById("publish").addEventListener("click", publish);
+  document.getElementById("download").addEventListener("click", download);
+  document.getElementById("reload").addEventListener("click", load);
+  document.querySelectorAll("[data-view]").forEach(function(b){ b.addEventListener("click", function(){
+    view = b.dataset.view; document.querySelectorAll("[data-view]").forEach(function(x){ x.classList.toggle("on", x === b); }); render(); }); });
+  document.getElementById("dark").addEventListener("click", function(){ dark = !dark; this.classList.toggle("on", dark); render(); });
+
+  // Token: kept only for this tab if asked (sessionStorage is cleared when the tab closes).
+  try { var t = sessionStorage.getItem("gh_token"); if (t) { tokenInput.value = t; remember.checked = true; } } catch (e) {}
+  function saveToken(){ try { if (remember.checked) sessionStorage.setItem("gh_token", token()); else sessionStorage.removeItem("gh_token"); } catch (e) {} }
+  tokenInput.addEventListener("input", saveToken); remember.addEventListener("change", saveToken);
+
+  load();
+})();
+</script>
+</body>
+</html>
