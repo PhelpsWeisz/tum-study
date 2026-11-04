@@ -7,11 +7,12 @@
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light dark">
-<title>Text editor · Pinturas e decisões</title>
+<title>Page editor · Pinturas e decisões</title>
 <style>
-  /* Editor for the texts of index.html. It reads the current file from GitHub, shows the
-     fields, previews the result live, and can publish straight back to the repo with a
-     GitHub token you paste in. The token never leaves your browser except to api.github.com. */
+  /* Editor for the landing page (index.html). It loads the file, shows every text as a
+     field, lets you reorder, hide, add or remove the blocks of the phone page, previews the
+     result live, and can publish straight back to GitHub with a token you paste in. The
+     token is sent only to api.github.com, never to this site. */
   @font-face{font-family:"Lora"; font-style:normal; font-weight:400 700; font-display:swap; src:url("fonts/Lora-latin.woff2") format("woff2")}
   :root{
     color-scheme:light dark;
@@ -42,17 +43,29 @@
   .btn:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
   .btn.small{min-height:36px; padding:4px 12px; font-size:14px; font-weight:500}
   .btn.on{background:var(--soft); box-shadow:inset 0 0 0 2px var(--gold)}
-  fieldset{border:1px solid var(--line); border-radius:12px; padding:10px 14px 14px; margin:0 0 14px; background:var(--soft)}
+  .ctl{display:inline-flex; align-items:center; justify-content:center; min-width:36px; min-height:36px; padding:0 10px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:14px; cursor:pointer}
+  .ctl:hover{border-color:var(--gold)} .ctl:disabled{opacity:.35; cursor:default}
+  .ctl:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+  .ctl.danger{color:var(--err)}
+  fieldset{border:1px solid var(--line); border-radius:12px; padding:10px 14px 14px; margin:0 0 14px; background:var(--soft); min-width:0}
+  fieldset.off{opacity:.6; border-style:dashed}
+  fieldset.off .bar::after{content:"hidden on the page"; font-size:12px; color:var(--err); margin-left:8px; font-weight:400}
   legend{font-family:"Lora", Georgia, serif; font-weight:600; font-size:17px; color:var(--burg-text); padding:0 6px}
-  .f{display:block; margin:8px 0 0}
+  .bar{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:-4px 0 4px}
+  .bar .spacer{flex:1}
+  .bar .what{font-size:13px; color:var(--ink-2)}
+  .f{display:block; margin:8px 0 0; min-width:0}
   .f .lab{display:block; font-size:13px; color:var(--ink-2); margin:0 0 3px}
   .f .lab b{color:var(--ink); font-weight:600}
-  .f .lab .lang{display:inline-block; font-size:11px; font-weight:600; letter-spacing:.04em; padding:1px 6px; border-radius:999px; border:1px solid var(--gold); color:var(--gold-text); margin-right:6px; vertical-align:middle}
+  .lang{display:inline-block; font-size:11px; font-weight:600; letter-spacing:.04em; padding:1px 6px; border-radius:999px; border:1px solid var(--gold); color:var(--gold-text); margin-right:6px; vertical-align:middle}
   input[type=text], input[type=password], textarea{width:100%; font:inherit; font-size:15px; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:9px 11px; min-height:44px}
   textarea{resize:vertical}
   input:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold)}
   .pair{display:grid; grid-template-columns:1fr 1fr; gap:10px}
   @media (max-width:520px){ .pair{grid-template-columns:1fr} }
+  .item{border:1px solid var(--line); border-radius:10px; background:var(--card); padding:8px 10px 10px; margin:10px 0 0}
+  .item.off{opacity:.6; border-style:dashed}
+  .item .bar{margin:0}
   .hint{font-size:13px; color:var(--ink-2); margin:6px 0 0}
   .status{min-height:1.5em; margin:8px 0 0; font-size:14px}
   .status.ok{color:var(--ok)} .status.err{color:var(--err)}
@@ -68,12 +81,13 @@
   .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
   .row input[type=password]{flex:1; min-width:200px}
   label.chk{display:flex; gap:6px; align-items:center; font-size:14px; color:var(--ink-2)}
+  h2{font-family:"Lora", Georgia, serif; font-size:18px; font-weight:600; color:var(--gold-text); margin:18px 0 8px}
 </style>
 </head>
 <body>
 <header>
-  <h1>Text editor · Pinturas e decisões</h1>
-  <p>Change the words on the landing page, check the preview, and publish. The design and the behaviour of the page stay the same.</p>
+  <h1>Page editor · Pinturas e decisões</h1>
+  <p>Change the texts, move or hide blocks, add or remove chips, check the preview, and publish. The design and the behaviour of the page stay the same.</p>
 </header>
 
 <div class="layout">
@@ -82,13 +96,13 @@
       <div class="toolbar">
         <button type="button" class="btn primary" id="publish" disabled>Publish to GitHub</button>
         <button type="button" class="btn" id="download" disabled>Download index.html</button>
-        <button type="button" class="btn" id="reload" title="Discard changes and load the current file again">Reload from GitHub</button>
+        <button type="button" class="btn" id="reload" title="Discard changes and load the current file again">Reload</button>
       </div>
-      <div class="status" id="status" aria-live="polite">Loading the current page from GitHub…</div>
+      <div class="status" id="status" aria-live="polite">Loading the current page…</div>
 
       <details id="tokbox">
         <summary>GitHub token (needed only to publish)</summary>
-        <p class="hint">Publishing commits <code>index.html</code> straight to <code>main</code>; GitHub Pages republishes in one to two minutes. You need a token once:</p>
+        <p class="hint">This page is a plain file: it has no server and cannot see or store what you type. The token goes from your browser straight to api.github.com over HTTPS, and nowhere else. Publishing commits <code>index.html</code> to <code>main</code>; GitHub Pages republishes in one to two minutes. To create a token once:</p>
         <ol class="hint">
           <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">github.com/settings/personal-access-tokens/new</a> (signed in as PhelpsWeisz).</li>
           <li>Name it e.g. “tum-study editor”, choose an expiry, and under <b>Repository access</b> pick <b>Only select repositories → tum-study</b>.</li>
@@ -98,9 +112,13 @@
           <input type="password" id="token" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
           <label class="chk"><input type="checkbox" id="remember"> keep for this browser tab</label>
         </div>
-        <p class="hint">The token is used only for requests to api.github.com from this page. Without a token you can still edit, preview and download the file, then upload it on GitHub.</p>
+        <p class="hint">Without a token you can still edit, preview and download the file, then upload it on GitHub (“Add file → Upload files”).</p>
       </details>
 
+      <h2>Phone page, in order</h2>
+      <p class="hint">Use ▲ ▼ to move a block, “Hide” to take it off the page (it stays here so you can bring it back). Chips can be added and removed; buttons can be hidden and reordered.</p>
+      <form id="blocks" autocomplete="off"></form>
+      <h2>Other texts</h2>
       <form id="form" autocomplete="off"></form>
     </div>
   </div>
@@ -125,35 +143,50 @@
   var OWNER = "PhelpsWeisz", REPO = "tum-study", BRANCH = "main", FILE = "index.html";
   var API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + FILE;
 
-  /* Every field is either an HTML element marked data-edit="key" in index.html (plain text
-     only inside it) or one string literal in the page's script (kind "js"). */
+  /* ---- What the page is made of ----
+     Blocks are the direct children of <section id="phone"> marked data-block="key". Inside
+     them, texts are elements marked data-edit="key" that contain plain text only. The script
+     of the page looks up buttons and boxes by id, so those are never removed, only hidden
+     (class "is-hidden"); chips are plain markup and can be added and removed freely. */
+  var BLOCKS = {
+    emblem:   { title: "Emblem" },
+    title:    { title: "Title", fields: [["title", "Title", "pt"]] },
+    subtitle: { title: "Line under the title", fields: [["subtitle", "Text", "en"]] },
+    tagline:  { title: "Subtitle", fields: [["tagline_pt", "Subtitle", "pt"], ["tagline_en", "Subtitle", "en"]] },
+    chips:    { title: "Chips", chips: true },
+    rule:     { title: "Gold divider" },
+    card:     { title: "Explanation card", fields: [["card_pt_bold", "First sentence (bold)", "pt"], ["card_pt", "Rest of the text", "pt"], ["card_en", "English text", "en"]] },
+    btns:     { title: "Buttons", buttons: true },
+    linkbox:  { title: "Link box (shows the link, and the “copied” message)" },
+    anyway:   { title: "Small print", fields: [["anyway", "“Continue on this device anyway” link", "pt+en"]] }
+  };
+  var BUTTONS = [["b-share", "Share", "share_pt", "share_en"], ["b-mail", "E-mail", "mail_pt", "mail_en"], ["b-wa", "WhatsApp", "wa_pt", "wa_en"], ["b-copy", "Copy link", "copy_pt", "copy_en"]];
   var GROUPS = [
-    { title: "Title", fields: [
-      ["title", "Title", "pt"], ["subtitle", "Line under the title", "en"],
-      ["tagline_pt", "Subtitle", "pt"], ["tagline_en", "Subtitle", "en"] ] },
-    { title: "Chips", pairs: [["chip1_pt","chip1_en"],["chip2_pt","chip2_en"],["chip3_pt","chip3_en"],["chip4_pt","chip4_en"],["chip5_pt","chip5_en"]], label: "Chip " },
-    { title: "Explanation card", fields: [
-      ["card_pt_bold", "First sentence (bold)", "pt"], ["card_pt", "Rest of the text", "pt"], ["card_en", "English text", "en"] ] },
-    { title: "Buttons", pairs: [["share_pt","share_en"],["mail_pt","mail_en"],["wa_pt","wa_en"],["copy_pt","copy_en"]], names: ["Share", "E-mail", "WhatsApp", "Copy link"] },
-    { title: "Small print", fields: [ ["anyway", "“Continue on this device anyway” link", "pt+en"] ] },
     { title: "Messages sent with the link", fields: [
-      ["js_subject", "E-mail subject", "pt+en", "js"], ["js_body", "First line of the e-mail and WhatsApp message (the link follows on the next line)", "pt+en", "js"],
-      ["js_share_title", "Title shown in the Share sheet", "pt+en", "js"],
-      ["js_copied", "Message after copying", "pt+en", "js"], ["js_selected", "Message when copying is not allowed", "pt+en", "js"] ] },
+      ["js_subject", "E-mail subject", "pt+en"], ["js_body", "First line of the e-mail and WhatsApp message (the link follows on the next line)", "pt+en"],
+      ["js_share_title", "Title shown in the Share sheet", "pt+en"],
+      ["js_copied", "Message after copying", "pt+en"], ["js_selected", "Message when copying is not allowed", "pt+en"] ] },
     { title: "Screen a computer sees before it forwards", fields: [
       ["desk_title", "Title", "pt+en"], ["desk_opening_pt", "Opening…", "pt"], ["desk_opening_en", "Opening…", "en"], ["desk_fallback", "Fallback link", "pt+en"] ] },
     { title: "Other", fields: [ ["tab_title", "Browser tab title", "pt+en"], ["noscript", "Text shown if JavaScript is off", "pt+en"] ] }
   ];
   var JS = {
-    js_subject:     [/(var subject = ")(.*?)(";)/, 'js'],
-    js_body:        [/(var body = ")(.*?)(\\n" \+ link;)/, 'js'],
-    js_share_title: [/(navigator\.share\(\{ title: ")(.*?)(",)/, 'js'],
-    js_copied:      [/(\.then\(function\(\)\{ say\(")(.*?)("\); \}, fallback\);)/, 'js'],
-    js_selected:    [/(function fallback\(\)\{ selectLink\(\); say\(")(.*?)("\); \})/, 'js']
+    js_subject:     /(var subject = ")(.*?)(";)/,
+    js_body:        /(var body = ")(.*?)(\\n" \+ link;)/,
+    js_share_title: /(navigator\.share\(\{ title: ")(.*?)(",)/,
+    js_copied:      /(\.then\(function\(\)\{ say\(")(.*?)("\); \}, fallback\);)/,
+    js_selected:    /(function fallback\(\)\{ selectLink\(\); say\(")(.*?)("\); \})/
   };
 
-  var source = "", sha = "", fields = {}, view = "phone", dark = false;
-  var form = document.getElementById("form"), status = document.getElementById("status");
+  /* ---- State ---- */
+  var source = "", view = "phone", dark = false;
+  var fields = {};               // data-edit / js key -> text (chips excluded)
+  var order = [];                // block keys in page order
+  var hidden = {};               // block key -> true when hidden
+  var chips = [];                // [{pt, en}]
+  var btnOrder = [], btnHidden = {}; // button ids
+  var structural = true;         // false if the phone section has content the editor does not understand
+  var blocksForm = document.getElementById("blocks"), form = document.getElementById("form"), status = document.getElementById("status");
   var tokenInput = document.getElementById("token"), remember = document.getElementById("remember");
 
   function say(t, cls){ status.textContent = t; status.className = "status " + (cls || ""); }
@@ -162,52 +195,201 @@
   function escJs(t){ return t.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " "); }
   function unescJs(t){ return t.replace(/\\"/g, '"').replace(/\\\\/g, "\\"); }
   function htmlRe(key){ return new RegExp('(<(\\w+)\\b[^>]*\\bdata-edit="' + key + '"[^>]*>)([^<]*)(<\\/\\2>)'); }
-
   function readField(key, src){
-    if (JS[key]) { var m = src.match(JS[key][0]); return m ? unescJs(m[2]) : null; }
+    if (JS[key]) { var m = src.match(JS[key]); return m ? unescJs(m[2]) : null; }
     var h = src.match(htmlRe(key)); return h ? unescHtml(h[3]) : null;
   }
   function writeField(key, value, src){
-    if (JS[key]) return src.replace(JS[key][0], function(_, a, b, c){ return a + escJs(value) + c; });
+    if (JS[key]) return src.replace(JS[key], function(_, a, b, c){ return a + escJs(value) + c; });
     return src.replace(htmlRe(key), function(_, a, tag, b, c){ return a + escHtml(value) + c; });
   }
+
+  /* The phone section and its blocks. parse() returns the pieces needed to rebuild it. */
+  function phoneSection(src){
+    var start = src.indexOf('<section id="phone" hidden>'); if (start < 0) return null;
+    var open = start + '<section id="phone" hidden>'.length;
+    var end = src.indexOf("</section>\n\n  <noscript>", open); if (end < 0) return null;
+    return { start: open, end: end, inner: src.slice(open, end) };
+  }
+  function splitBlocks(inner){
+    var re = /<(\w+)\b[^>]*\bdata-block="([a-z_]+)"[^>]*>[\s\S]*?<\/\1>/g, m, blocks = [], seps = [], last = 0;
+    while ((m = re.exec(inner))) { seps.push(inner.slice(last, m.index)); blocks.push({ key: m[2], html: m[0] }); last = m.index + m[0].length; }
+    seps.push(inner.slice(last));
+    var clean = seps.every(function(s){ return /^\s*$/.test(s); });
+    return { blocks: blocks, seps: seps, clean: clean };
+  }
+  function splitItems(blockHtml, itemRe){
+    // Items inside a block (chips <li>, buttons by id). Returns items and the surrounding text.
+    var m, items = [], seps = [], last = 0;
+    while ((m = itemRe.exec(blockHtml))) { seps.push(blockHtml.slice(last, m.index)); items.push(m); last = m.index + m[0].length; }
+    seps.push(blockHtml.slice(last));
+    return { items: items, seps: seps };
+  }
+  var CHIP_RE = /<li>[\s\S]*?<\/li>/g;
+  var BTN_RE = /<(button|a)\b[^>]*\bid="(b-[a-z]+)"[^>]*>[\s\S]*?<\/\1>/g;
+  function hasClass(openTag, cls){ var m = openTag.match(/\bclass="([^"]*)"/); return !!(m && m[1].split(/\s+/).indexOf(cls) >= 0); }
+  function setClass(html, cls, on){
+    // Adds or removes a class on the first (opening) tag of html.
+    return html.replace(/^<(\w+)([^>]*)>/, function(all, tag, attrs){
+      var m = attrs.match(/\bclass="([^"]*)"/), list = m ? m[1].split(/\s+/).filter(Boolean) : [];
+      var i = list.indexOf(cls); if (on && i < 0) list.push(cls); if (!on && i >= 0) list.splice(i, 1);
+      if (m) {
+        if (list.length) attrs = attrs.replace(/\bclass="[^"]*"/, 'class="' + list.join(" ") + '"');
+        else attrs = attrs.replace(/\s*\bclass="[^"]*"/, "");
+      } else if (list.length) attrs = ' class="' + list.join(" ") + '"' + attrs;
+      return "<" + tag + attrs + ">";
+    });
+  }
+  function readChips(blockHtml){
+    var out = [];
+    (blockHtml.match(CHIP_RE) || []).forEach(function(li){
+      var pt = li.match(/<b[^>]*>([^<]*)<\/b>/), en = li.match(/<span[^>]*>([^<]*)<\/span>/);
+      out.push({ pt: pt ? unescHtml(pt[1]) : "", en: en ? unescHtml(en[1]) : "" });
+    });
+    return out;
+  }
+  function chipHtml(c, i){
+    var pt = c.pt.trim(), en = c.en.trim(), n = i + 1;
+    if (!pt && !en) return "";
+    if (!pt) return '<li><span data-edit="chip' + n + '_en">' + escHtml(en) + '</span></li>';
+    return '<li><b data-edit="chip' + n + '_pt">' + escHtml(pt) + '</b>' + (en ? ' · <span data-edit="chip' + n + '_en">' + escHtml(en) + '</span>' : '') + '</li>';
+  }
+
+  /* Read the whole state from a file. */
+  function parse(src){
+    fields = {}; order = []; hidden = {}; chips = []; btnOrder = []; btnHidden = {};
+    var sec = phoneSection(src), sb = sec ? splitBlocks(sec.inner) : null;
+    structural = !!(sb && sb.clean && sb.blocks.length);
+    if (sb) sb.blocks.forEach(function(b){
+      order.push(b.key); hidden[b.key] = hasClass(b.html.match(/^<\w+[^>]*>/)[0], "is-hidden");
+      if (b.key === "chips") chips = readChips(b.html);
+      if (b.key === "btns") splitItems(b.html, new RegExp(BTN_RE.source, "g")).items.forEach(function(m){ btnOrder.push(m[2]); btnHidden[m[2]] = hasClass(m[0].match(/^<\w+[^>]*>/)[0], "is-hidden"); });
+    });
+    var keys = [];
+    Object.keys(BLOCKS).forEach(function(k){ (BLOCKS[k].fields || []).forEach(function(f){ keys.push(f[0]); }); });
+    BUTTONS.forEach(function(b){ keys.push(b[2], b[3]); });
+    GROUPS.forEach(function(g){ g.fields.forEach(function(f){ keys.push(f[0]); }); });
+    keys.forEach(function(k){ var v = readField(k, src); if (v !== null) fields[k] = v; });
+  }
+
+  /* Write the state into a file (the loaded one, or the newest copy from GitHub). */
   function apply(src){
-    var out = src;
+    var out = src, sec = phoneSection(src), sb = sec ? splitBlocks(sec.inner) : null;
+    if (sb && sb.clean && sb.blocks.length) {
+      var byKey = {}; sb.blocks.forEach(function(b){ byKey[b.key] = b.html; });
+      var keys = order.filter(function(k){ return byKey[k]; });
+      sb.blocks.forEach(function(b){ if (keys.indexOf(b.key) < 0) keys.push(b.key); });
+      var inner = sb.seps[0];
+      keys.forEach(function(k, i){
+        var html = byKey[k];
+        if (k === "chips") {
+          var si = splitItems(html, new RegExp(CHIP_RE.source, "g"));
+          var lis = chips.map(chipHtml).filter(Boolean);
+          var pad = si.seps.length > 1 ? si.seps[1] : "\n      ";
+          html = lis.length ? si.seps[0] + lis.join(pad) + si.seps[si.seps.length - 1]
+                            : si.seps[0].replace(/\s+$/, "") + si.seps[si.seps.length - 1];
+          html = setClass(html, "is-hidden", !!hidden[k] || lis.length === 0);
+        } else if (k === "btns") {
+          var sj = splitItems(html, new RegExp(BTN_RE.source, "g")), byId = {};
+          sj.items.forEach(function(m){ byId[m[2]] = m[0]; });
+          var ids = btnOrder.filter(function(id){ return byId[id]; });
+          sj.items.forEach(function(m){ if (ids.indexOf(m[2]) < 0) ids.push(m[2]); });
+          html = sj.seps[0] + ids.map(function(id, j){ return setClass(byId[id], "is-hidden", !!btnHidden[id]) + sj.seps[j + 1]; }).join("");
+          html = setClass(html, "is-hidden", !!hidden[k]);
+        } else {
+          html = setClass(html, "is-hidden", !!hidden[k]);
+        }
+        inner += html + sb.seps[i + 1];
+      });
+      out = out.slice(0, sec.start) + inner + out.slice(sec.end);
+    }
     Object.keys(fields).forEach(function(k){ out = writeField(k, fields[k], out); });
     return out;
   }
 
-  function addField(parent, key, label, lang, kind){
-    var val = readField(key, source);
-    if (val === null) return; // not in this version of the page
-    fields[key] = val;
-    var lab = document.createElement("label"); lab.className = "f";
-    var langs = lang.split("+").map(function(l){ return '<span class="lang">' + l.toUpperCase() + '</span>'; }).join("");
-    lab.innerHTML = '<span class="lab">' + langs + '<b></b></span>';
-    lab.querySelector("b").textContent = label;
-    var inp = document.createElement(val.length > 60 ? "textarea" : "input");
+  /* ---- Form ---- */
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function ctl(label, title, fn, disabled){ var b = el("button", "ctl", label); b.type = "button"; b.title = title; b.setAttribute("aria-label", title); b.disabled = !!disabled; b.addEventListener("click", fn); return b; }
+  function addField(parent, key, label, lang){
+    if (!(key in fields)) return;
+    var lab = el("label", "f"), span = el("span", "lab");
+    lang.split("+").forEach(function(l){ span.appendChild(el("span", "lang", l.toUpperCase())); });
+    span.appendChild(el("b", "", label)); lab.appendChild(span);
+    var inp = document.createElement(fields[key].length > 60 ? "textarea" : "input");
     if (inp.tagName === "INPUT") inp.type = "text"; else inp.rows = 2;
-    inp.value = val; inp.dataset.key = key;
+    inp.value = fields[key]; inp.dataset.key = key;
     inp.addEventListener("input", function(){ fields[key] = inp.value; schedule(); });
     lab.appendChild(inp); parent.appendChild(lab);
   }
-  function build(){
-    form.innerHTML = ""; fields = {};
-    GROUPS.forEach(function(g){
-      var fs = document.createElement("fieldset"); var lg = document.createElement("legend"); lg.textContent = g.title; fs.appendChild(lg);
-      if (g.fields) g.fields.forEach(function(f){ addField(fs, f[0], f[1], f[2], f[3]); });
-      if (g.pairs) g.pairs.forEach(function(p, i){
-        var row = document.createElement("div"); row.className = "pair";
-        var name = g.names ? g.names[i] : g.label + (i + 1);
-        addField(row, p[0], name, "pt"); addField(row, p[1], name, "en"); fs.appendChild(row);
+  function move(arr, i, d){ var j = i + d; if (j < 0 || j >= arr.length) return; var t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+
+  function buildBlocks(){
+    blocksForm.innerHTML = "";
+    if (!structural) { blocksForm.appendChild(el("p", "hint", "This version of the page has no block markers, so only the texts can be edited.")); }
+    order.forEach(function(key, i){
+      var def = BLOCKS[key] || { title: key }, fs = el("fieldset", hidden[key] ? "off" : ""), lg = el("legend", "", def.title); fs.appendChild(lg);
+      var bar = el("div", "bar");
+      bar.appendChild(ctl("▲", "Move up", function(){ move(order, i, -1); buildBlocks(); render(); }, !structural || i === 0));
+      bar.appendChild(ctl("▼", "Move down", function(){ move(order, i, 1); buildBlocks(); render(); }, !structural || i === order.length - 1));
+      bar.appendChild(ctl(hidden[key] ? "Show" : "Hide", hidden[key] ? "Show this block on the page" : "Hide this block from the page", function(){ hidden[key] = !hidden[key]; buildBlocks(); render(); }, !structural));
+      bar.appendChild(el("span", "spacer"));
+      fs.appendChild(bar);
+      (def.fields || []).forEach(function(f){ addField(fs, f[0], f[1], f[2]); });
+      if (def.chips) buildChips(fs);
+      if (def.buttons) buildButtons(fs);
+      blocksForm.appendChild(fs);
+    });
+  }
+  function buildChips(fs){
+    var list = el("div"); fs.appendChild(list);
+    chips.forEach(function(c, i){
+      var it = el("div", "item"), bar = el("div", "bar");
+      bar.appendChild(el("span", "what", "Chip " + (i + 1)));
+      bar.appendChild(el("span", "spacer"));
+      bar.appendChild(ctl("▲", "Move up", function(){ move(chips, i, -1); buildBlocks(); render(); }, i === 0));
+      bar.appendChild(ctl("▼", "Move down", function(){ move(chips, i, 1); buildBlocks(); render(); }, i === chips.length - 1));
+      var rm = ctl("Remove", "Remove this chip", function(){ chips.splice(i, 1); buildBlocks(); render(); }); rm.classList.add("danger"); bar.appendChild(rm);
+      it.appendChild(bar);
+      var pair = el("div", "pair");
+      [["pt", "Portuguese"], ["en", "English (optional)"]].forEach(function(p){
+        var lab = el("label", "f"), span = el("span", "lab"); span.appendChild(el("span", "lang", p[0].toUpperCase())); span.appendChild(el("b", "", p[1])); lab.appendChild(span);
+        var inp = document.createElement("input"); inp.type = "text"; inp.value = c[p[0]]; inp.dataset.key = "chip" + (i + 1) + "_" + p[0];
+        inp.addEventListener("input", function(){ c[p[0]] = inp.value; schedule(); });
+        lab.appendChild(inp); pair.appendChild(lab);
       });
+      it.appendChild(pair); list.appendChild(it);
+    });
+    var add = el("button", "ctl", "+ Add chip"); add.type = "button"; add.style.marginTop = "10px";
+    add.addEventListener("click", function(){ chips.push({ pt: "", en: "" }); buildBlocks(); render(); var last = blocksForm.querySelector('[data-key="chip' + chips.length + '_pt"]'); if (last) last.focus(); });
+    fs.appendChild(add);
+    if (!chips.length) fs.appendChild(el("p", "hint", "No chips: the row is left out of the page."));
+  }
+  function buildButtons(fs){
+    btnOrder.forEach(function(id, i){
+      var def = BUTTONS.filter(function(b){ return b[0] === id; })[0] || [id, id];
+      var it = el("div", "item" + (btnHidden[id] ? " off" : "")), bar = el("div", "bar");
+      bar.appendChild(el("span", "what", def[1] + (btnHidden[id] ? " (hidden)" : "")));
+      bar.appendChild(el("span", "spacer"));
+      bar.appendChild(ctl("▲", "Move up", function(){ move(btnOrder, i, -1); buildBlocks(); render(); }, i === 0));
+      bar.appendChild(ctl("▼", "Move down", function(){ move(btnOrder, i, 1); buildBlocks(); render(); }, i === btnOrder.length - 1));
+      bar.appendChild(ctl(btnHidden[id] ? "Show" : "Hide", "Hide or show this button", function(){ btnHidden[id] = !btnHidden[id]; buildBlocks(); render(); }));
+      it.appendChild(bar);
+      var pair = el("div", "pair"); addField(pair, def[2], def[1], "pt"); addField(pair, def[3], def[1], "en"); it.appendChild(pair);
+      fs.appendChild(it);
+    });
+  }
+  function buildOther(){
+    form.innerHTML = "";
+    GROUPS.forEach(function(g){
+      var fs = el("fieldset"), lg = el("legend", "", g.title); fs.appendChild(lg);
+      g.fields.forEach(function(f){ addField(fs, f[0], f[1], f[2]); });
       form.appendChild(fs);
     });
-    render();
   }
+  function build(){ buildBlocks(); buildOther(); render(); }
 
-  /* Preview: the page itself, with the forward disabled, links neutralised, a phone or
-     computer identity, and (optionally) the dark colours forced on. */
+  /* ---- Preview: the page itself with the forward disabled, links neutralised, a phone or
+     computer identity, and (optionally) the dark colours forced on. ---- */
   var timer = null;
   function schedule(){ clearTimeout(timer); timer = setTimeout(render, 150); }
   function render(){
@@ -223,14 +405,13 @@
     html = html.replace("<head>", "<head>" + inject);
     var fr = document.getElementById("preview"); fr.srcdoc = html;
     fr.className = view === "phone" ? "phone" : "";
-    document.getElementById("download").disabled = false;
+    document.getElementById("download").disabled = !source;
     document.getElementById("publish").disabled = !source;
   }
 
-  /* Base64 of UTF-8 text, both ways (the GitHub API speaks base64). */
+  /* ---- Load, download, publish ---- */
   function b64enc(s){ var b = new TextEncoder().encode(s), bin = ""; for (var i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]); return btoa(bin); }
   function b64dec(s){ var bin = atob(s.replace(/\s/g, "")), b = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return new TextDecoder().decode(b); }
-
   function token(){ return tokenInput.value.trim(); }
   function headers(){ var h = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }; if (token()) h["Authorization"] = "Bearer " + token(); return h; }
 
@@ -241,35 +422,32 @@
       // a fresh publish). Publishing always fetches the newest file from GitHub first.
       return fetch("index.html?t=" + Date.now(), { cache: "no-store" })
         .then(function(r){ if (!r.ok) throw new Error("the site answered " + r.status); return r.text(); })
-        .then(function(t){ source = t; sha = ""; build(); say("Loaded the published page. Edit the texts; the preview updates as you type.", "ok"); })
+        .then(function(t){ source = t; parse(source); build(); say("Loaded the published page. Edit away; the preview updates as you go.", "ok"); })
         .catch(function(e){ say("Could not load the page: " + e.message, "err"); });
     }
     return fetch(API + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: headers(), cache: "no-store" })
       .then(function(r){ if (!r.ok) throw new Error("GitHub answered " + r.status); return r.json(); })
-      .then(function(j){ source = b64dec(j.content); sha = j.sha; build(); say("Loaded the current file from GitHub. Edit the texts; the preview updates as you type.", "ok"); })
+      .then(function(j){ source = b64dec(j.content); parse(source); build(); say("Loaded the current file from GitHub. Edit away; the preview updates as you go.", "ok"); })
       .catch(function(e){ say("Could not load from GitHub (" + e.message + "). Check the token, or clear it to load the published copy instead.", "err"); });
   }
-
   function download(){
     var blob = new Blob([apply(source)], { type: "text/html;charset=utf-8" });
     var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = FILE; document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
     say("Downloaded index.html. To publish by hand: on GitHub open the repo, “Add file → Upload files”, drop it in, commit to main.", "ok");
   }
-
   function publish(){
     if (!token()) { document.getElementById("tokbox").open = true; tokenInput.focus(); say("Paste a GitHub token first (see the box above), or download the file instead.", "err"); return; }
     var btn = document.getElementById("publish"); btn.disabled = true; say("Publishing… fetching the latest version first.");
-    // Always apply the texts to the newest copy on GitHub, so nothing else in the file is lost.
     fetch(API + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: headers(), cache: "no-store" })
       .then(function(r){ if (!r.ok) throw new Error("could not read the current file (GitHub answered " + r.status + ")"); return r.json(); })
       .then(function(j){
         var latest = b64dec(j.content), out = apply(latest);
-        if (out === latest) { throw new Error("nothing to publish: the texts are the same as on GitHub"); }
+        if (out === latest) { throw new Error("nothing to publish: the page is the same as on GitHub"); }
         return fetch(API, { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, headers()),
-          body: JSON.stringify({ message: "Update page texts via editor", content: b64enc(out), sha: j.sha, branch: BRANCH }) })
+          body: JSON.stringify({ message: "Update page via editor", content: b64enc(out), sha: j.sha, branch: BRANCH }) })
           .then(function(r){ return r.json().then(function(b){ if (!r.ok) throw new Error((b && b.message) || ("GitHub answered " + r.status)); return b; }); })
-          .then(function(b){ source = out; sha = b.content && b.content.sha || sha; say("Published (commit " + (b.commit && b.commit.sha || "").slice(0, 7) + "). The live page updates in one to two minutes.", "ok"); });
+          .then(function(b){ source = out; parse(source); build(); say("Published (commit " + (b.commit && b.commit.sha || "").slice(0, 7) + "). The live page updates in one to two minutes.", "ok"); });
       })
       .catch(function(e){ say("Not published: " + e.message, "err"); })
       .then(function(){ btn.disabled = false; });

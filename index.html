@@ -149,7 +149,7 @@
 
   noscript p{margin:0; font-size:15px; line-height:1.5}
   noscript a{color:var(--burg-text); word-break:break-all}
-  [hidden]{display:none !important}
+  [hidden],.is-hidden{display:none !important}
 </style>
 </head>
 <body>
@@ -172,40 +172,41 @@
 
   <!-- Shown on a phone or tablet. -->
   <section id="phone" hidden>
-    <svg class="emblem" viewBox="0 0 84 84" aria-hidden="true" focusable="false">
+    <svg class="emblem" data-block="emblem" viewBox="0 0 84 84" aria-hidden="true" focusable="false">
       <circle class="disc" cx="42" cy="42" r="40"/>
       <circle class="ring" cx="42" cy="42" r="40"/>
       <circle class="ring ring-in" cx="42" cy="42" r="35"/>
       <text x="42" y="51" text-anchor="middle" font-size="27">P<tspan class="dot" dx="1" dy="-8" font-size="11">◆</tspan><tspan dx="1" dy="8">D</tspan></text>
     </svg>
-    <h1 data-edit="title">Pinturas e decisões</h1>
-    <p class="sub" data-edit="subtitle">Paintings and decisions</p>
-    <p class="tagline"><span data-edit="tagline_pt">Procuram-se participantes</span> <span class="en" data-edit="tagline_en">Participants wanted</span></p>
+    <h1 data-block="title" data-edit="title">Pinturas e decisões</h1>
+    <p class="sub" data-block="subtitle" data-edit="subtitle">Paintings and decisions</p>
+    <p class="tagline" data-block="tagline"><span data-edit="tagline_pt">Procuram-se participantes</span> <span class="en" data-edit="tagline_en">Participants wanted</span></p>
 
-    <ul class="chips" aria-label="Detalhes · Details">
+    <ul class="chips" data-block="chips" aria-label="Detalhes · Details">
       <li><b data-edit="chip1_pt">~40 min</b></li>
       <li><b data-edit="chip2_pt">em inglês</b> · <span data-edit="chip2_en">in English</span></li>
       <li><b data-edit="chip3_pt">anónimo</b> · <span data-edit="chip3_en">anonymous</span></li>
-      <li><b data-edit="chip4_pt">não remunerado</b> · <span data-edit="chip4_en">unpaid</span></li>
     </ul>
 
-    <div class="rule" aria-hidden="true"><i></i></div>
+    <div class="rule" data-block="rule" aria-hidden="true"><i></i></div>
 
-    <div class="card">
+    <div class="card" data-block="card">
       <p><strong data-edit="card_pt_bold">Este estudo só funciona num computador.</strong> <span data-edit="card_pt">Envie a ligação para si e abra-a mais tarde num computador.</span></p>
       <p class="en" data-edit="card_en">This study only works on a computer: send yourself the link and open it later.</p>
     </div>
 
-    <div class="btns">
+    <div class="btns" data-block="btns">
       <button type="button" class="btn primary" id="b-share" hidden><span data-edit="share_pt">Partilhar…</span><small data-edit="share_en">Share…</small></button>
       <a class="btn" id="b-mail" href="#"><span data-edit="mail_pt">Enviar por e-mail</span><small data-edit="mail_en">Send by e-mail</small></a>
       <a class="btn" id="b-wa" href="#" rel="noopener noreferrer"><span data-edit="wa_pt">Enviar por WhatsApp</span><small data-edit="wa_en">Send via WhatsApp</small></a>
       <button type="button" class="btn" id="b-copy"><span data-edit="copy_pt">Copiar ligação</span><small data-edit="copy_en">Copy link</small></button>
     </div>
-    <div class="status" id="status" aria-live="polite"></div>
-    <div class="link" id="linktext"></div>
+    <section class="linkbox" data-block="linkbox">
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="link" id="linktext"></div>
+    </section>
 
-    <p class="anyway"><a id="b-anyway" href="#" data-edit="anyway">Continuar neste dispositivo mesmo assim · Continue on this device anyway</a></p>
+    <p class="anyway" data-block="anyway"><a id="b-anyway" href="#" data-edit="anyway">Continuar neste dispositivo mesmo assim · Continue on this device anyway</a></p>
   </section>
 
   <noscript>
