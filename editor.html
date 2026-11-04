@@ -235,16 +235,19 @@
   function headers(){ var h = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }; if (token()) h["Authorization"] = "Bearer " + token(); return h; }
 
   function load(){
-    say("Loading the current page from GitHub…");
+    say("Loading the current page…");
+    if (!token()) {
+      // No token: read the published copy from this site (it can lag a minute or two behind
+      // a fresh publish). Publishing always fetches the newest file from GitHub first.
+      return fetch("index.html?t=" + Date.now(), { cache: "no-store" })
+        .then(function(r){ if (!r.ok) throw new Error("the site answered " + r.status); return r.text(); })
+        .then(function(t){ source = t; sha = ""; build(); say("Loaded the published page. Edit the texts; the preview updates as you type.", "ok"); })
+        .catch(function(e){ say("Could not load the page: " + e.message, "err"); });
+    }
     return fetch(API + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: headers(), cache: "no-store" })
       .then(function(r){ if (!r.ok) throw new Error("GitHub answered " + r.status); return r.json(); })
-      .then(function(j){ source = b64dec(j.content); sha = j.sha; build(); say("Loaded the current page (" + source.length + " characters). Edit the texts; the preview updates as you type.", "ok"); })
-      .catch(function(e){
-        // Fallback: the published copy on this site (may lag a minute or two behind GitHub).
-        return fetch("index.html?t=" + Date.now(), { cache: "no-store" }).then(function(r){ return r.text(); }).then(function(t){
-          source = t; sha = ""; build(); say("GitHub API not reachable (" + e.message + "); loaded the published copy instead. Publishing will fetch the latest version first.", "err");
-        });
-      });
+      .then(function(j){ source = b64dec(j.content); sha = j.sha; build(); say("Loaded the current file from GitHub. Edit the texts; the preview updates as you type.", "ok"); })
+      .catch(function(e){ say("Could not load from GitHub (" + e.message + "). Check the token, or clear it to load the published copy instead.", "err"); });
   }
 
   function download(){
